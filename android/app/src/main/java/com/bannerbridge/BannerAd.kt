@@ -16,6 +16,7 @@ import com.google.android.gms.ads.MobileAds
 import android.util.Log
 import android.view.Gravity
 import android.graphics.Color
+import android.util.DisplayMetrics
 
 class BannerAd(context: Context) : FrameLayout(context) {
     private var adView: AdView? = null
@@ -23,21 +24,16 @@ class BannerAd(context: Context) : FrameLayout(context) {
     companion object {
         private const val TAG = "BannerAd"
         private const val TEST_BANNER_ID = "ca-app-pub-3940256099942544/6300978111"
-        // Fixed dimensions for MEDIUM_RECTANGLE
-        private const val AD_WIDTH = 300
-        private const val AD_HEIGHT = 250
     }
     
     init {
         Log.d(TAG, "Initializing BannerAd")
-        setBackgroundColor(Color.YELLOW) // Debug color
         setupBannerAd()
     }
 
     private fun setupBannerAd() {
         Log.d(TAG, "Setting up banner ad")
         
-        // Initialize MobileAds with completion listener
         MobileAds.initialize(context) { initializationStatus ->
             val statusMap = initializationStatus.adapterStatusMap
             statusMap.forEach { (adapter, status) ->
@@ -49,24 +45,25 @@ class BannerAd(context: Context) : FrameLayout(context) {
     }
 
     private fun createAndLoadAd() {
-        Log.d(TAG, "Creating new AdView with fixed size: ${AD_WIDTH}x${AD_HEIGHT}")
+        Log.d(TAG, "Creating new AdView")
         
         // Clean up existing AdView
         adView?.destroy()
         adView = null
         removeAllViews()
 
-        // Create new AdView with fixed size
+        // Create new AdView
         adView = AdView(context).apply {
             adUnitId = TEST_BANNER_ID
-            
-            // Set fixed size
             setAdSize(AdSize.MEDIUM_RECTANGLE)
             
-            // Set fixed layout parameters
-            val params = LayoutParams(AD_WIDTH, AD_HEIGHT)
-            params.gravity = Gravity.CENTER
-            layoutParams = params
+            // Use WRAP_CONTENT to let the ad determine its size
+            layoutParams = LayoutParams(
+                LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.CENTER
+            }
 
             adListener = object : AdListener() {
                 override fun onAdLoaded() {
@@ -74,6 +71,14 @@ class BannerAd(context: Context) : FrameLayout(context) {
                     Log.d(TAG, "Ad loaded successfully!")
                     Log.d(TAG, "AdView size: ${width}x${height}")
                     Log.d(TAG, "AdSize: ${adSize?.width}x${adSize?.height}")
+                    
+                    // Update the container size after ad is loaded
+                    post {
+                        val params = layoutParams
+                        params.width = width
+                        params.height = height
+                        layoutParams = params
+                    }
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
@@ -85,17 +90,20 @@ class BannerAd(context: Context) : FrameLayout(context) {
             }
         }
 
-        // Set container size to match ad size
-        layoutParams = LayoutParams(AD_WIDTH, AD_HEIGHT)
+        // Set container to wrap content
+        layoutParams = LayoutParams(
+            LayoutParams.WRAP_CONTENT,
+            LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = Gravity.CENTER
+        }
         
-        // Add AdView to layout with fixed size
-        val containerParams = LayoutParams(AD_WIDTH, AD_HEIGHT)
-        containerParams.gravity = Gravity.CENTER
-        addView(adView, containerParams)
+        // Add AdView to layout
+        addView(adView)
         
         // Load the ad
         val adRequest = AdRequest.Builder().build()
-        Log.d(TAG, "Requesting ad load with fixed size: ${AD_WIDTH}x${AD_HEIGHT}")
+        Log.d(TAG, "Requesting ad load")
         adView?.loadAd(adRequest)
     }
 
