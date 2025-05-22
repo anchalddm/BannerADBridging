@@ -17,10 +17,9 @@ function App(): React.JSX.Element {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.content}>
-        <Text style={styles.text}>Hello World</Text>
         <View style={styles.bannerContainer}>
+          <Text style={styles.text}>Hello React</Text>
           
-          <Text style={styles.bannerLabel}>Native Banner Ad Below</Text>
           <BannerAd width={300} height={600}  />
         </View>
       </View>
