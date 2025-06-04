@@ -19,6 +19,8 @@ import android.view.Gravity;
 import android.graphics.Color;
 import android.app.Activity;
 import android.view.View;
+import java.util.Map;
+import java.util.HashMap;
 
 public class BannerAd extends FrameLayout {
     private static final String TAG = "BannerAd";
@@ -182,9 +184,11 @@ public class BannerAd extends FrameLayout {
 }
 
 class BannerAdManager extends SimpleViewManager<BannerAd> {
+    public static final String REACT_CLASS = "BannerAd";
+    
     @Override
     public String getName() {
-        return "BannerAd";
+        return REACT_CLASS;
     }
 
     @Override
@@ -201,5 +205,20 @@ class BannerAdManager extends SimpleViewManager<BannerAd> {
     @ReactProp(name = "height")
     public void setHeight(BannerAd view, int height) {
         Log.d("BannerAdManager", "Setting height prop: " + height);
+    }
+
+    @Override
+    public Map<String, Object> getExportedCustomDirectEventTypeConstants() {
+        Map<String, Object> builders = new HashMap<>();
+        
+        Map<String, String> onLoadEvent = new HashMap<>();
+        onLoadEvent.put("registrationName", "onBannerAdLoaded");
+        builders.put("topBannerAdLoaded", onLoadEvent);
+        
+        Map<String, String> onFailEvent = new HashMap<>();
+        onFailEvent.put("registrationName", "onBannerAdFailedToLoad");
+        builders.put("topBannerAdFailedToLoad", onFailEvent);
+        
+        return builders;
     }
 } 
