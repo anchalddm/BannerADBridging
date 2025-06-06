@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { BannerAd } from './src/BannerAd';
+import VideoAd from './src/components/VideoAd';
 
 function App(): React.JSX.Element {
   return (
@@ -20,7 +21,14 @@ function App(): React.JSX.Element {
         <View style={styles.bannerContainer}>
           <Text style={styles.text}>Hello React</Text>
           
-          <BannerAd width={300} height={600}  />
+          {/* <BannerAd width={300} height={600}  /> */}
+          <VideoAd
+            style={{ width: 300, height: 250 }}
+            width={300}
+            height={250}
+            onVideoAdLoaded={() => console.log('Video ad loaded')}
+            onVideoAdFailedToLoad={(error) => console.log('Video ad failed to load:', error)}
+          />
         </View>
       </View>
     </SafeAreaView>
