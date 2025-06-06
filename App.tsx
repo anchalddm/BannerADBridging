@@ -4,6 +4,7 @@
 
 import React from 'react';
 import {
+  Dimensions,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -24,7 +25,7 @@ function App(): React.JSX.Element {
           {/* <BannerAd width={300} height={600}  /> */}
           <VideoAd
             style={{ width: 400, height: 600 }}
-            width={400}
+            width={Dimensions.get('window').width}
             height={600}
             onVideoAdLoaded={() => console.log('Video ad loaded')}
             onVideoAdFailedToLoad={(error) => console.log('Video ad failed to load:', error)}

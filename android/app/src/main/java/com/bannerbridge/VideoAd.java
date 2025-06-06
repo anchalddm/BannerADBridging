@@ -14,6 +14,10 @@ import com.google.android.gms.ads.admanager.AdManagerAdRequest;
 import android.app.Activity;
 import android.view.Gravity;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.widget.Toast;
 
 public class VideoAd extends FrameLayout {
     private static final String TAG = "VideoAd";
@@ -33,6 +37,7 @@ public class VideoAd extends FrameLayout {
     private TextView statusText;
     private FrameLayout adContainer;
     private VideoController currentVideoController;
+    private ImageView placeholderView;
 
     public VideoAd(Context context) {
         super(context);
@@ -78,51 +83,109 @@ public class VideoAd extends FrameLayout {
     }
 
     private void setupUIElements() {
-        // Heading TextView
+        // This container will hold both the text card and the controls row
+        LinearLayout bottomControlsContainer = new LinearLayout(getContext());
+        bottomControlsContainer.setOrientation(LinearLayout.VERTICAL);
+        FrameLayout.LayoutParams bottomContainerParams = new FrameLayout.LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.WRAP_CONTENT,
+            Gravity.BOTTOM
+        );
+        bottomControlsContainer.setLayoutParams(bottomContainerParams);
+
+        // --- Card for Heading and Subheading ---
+        LinearLayout textOverlayCard = new LinearLayout(getContext());
+        textOverlayCard.setOrientation(LinearLayout.VERTICAL);
+        int overlayPadding = (int) (24 * getResources().getDisplayMetrics().density);
+        textOverlayCard.setPadding(overlayPadding, overlayPadding, overlayPadding, overlayPadding);
+        textOverlayCard.setBackground(createRoundedBackground());
+        LinearLayout.LayoutParams textCardParams = new LinearLayout.LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.WRAP_CONTENT
+        );
+        textCardParams.leftMargin = (int) (16 * getResources().getDisplayMetrics().density);
+        textCardParams.rightMargin = (int) (16 * getResources().getDisplayMetrics().density);
+        textOverlayCard.setLayoutParams(textCardParams);
+
         headingTextView = new TextView(getContext());
-        headingTextView.setTextSize(18);
+        headingTextView.setTextSize(22);
+        headingTextView.setTypeface(Typeface.DEFAULT_BOLD);
         headingTextView.setTextColor(Color.WHITE);
-        FrameLayout.LayoutParams headingParams = new FrameLayout.LayoutParams(
-            LayoutParams.WRAP_CONTENT,
-            LayoutParams.WRAP_CONTENT,
-            Gravity.TOP | Gravity.CENTER_HORIZONTAL
-        );
-        headingParams.topMargin = 16;
-        adContainer.addView(headingTextView, headingParams);
-        
-        // Subtext TextView
+        textOverlayCard.addView(headingTextView);
+
         subtextTextView = new TextView(getContext());
-        subtextTextView.setTextSize(14);
+        subtextTextView.setTextSize(15);
         subtextTextView.setTextColor(Color.WHITE);
-        FrameLayout.LayoutParams subtextParams = new FrameLayout.LayoutParams(
-            LayoutParams.WRAP_CONTENT,
-            LayoutParams.WRAP_CONTENT,
-            Gravity.TOP | Gravity.CENTER_HORIZONTAL
-        );
-        subtextParams.topMargin = 48;
-        adContainer.addView(subtextTextView, subtextParams);
+        subtextTextView.setAlpha(0.9f);
+        LinearLayout.LayoutParams subtextLpParams = new LinearLayout.LayoutParams(
+            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        subtextLpParams.topMargin = (int) (8 * getResources().getDisplayMetrics().density);
+        textOverlayCard.addView(subtextTextView, subtextLpParams);
         
+        bottomControlsContainer.addView(textOverlayCard);
+
+        // --- Row for CTA and Mute Button ---
+        RelativeLayout controlsRowLayout = new RelativeLayout(getContext());
+        LinearLayout.LayoutParams controlsRowParams = new LinearLayout.LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.WRAP_CONTENT
+        );
+        controlsRowParams.topMargin = (int) (12 * getResources().getDisplayMetrics().density); // Space between text card and controls row
+        controlsRowParams.leftMargin = (int) (16 * getResources().getDisplayMetrics().density);
+        controlsRowParams.rightMargin = (int) (16 * getResources().getDisplayMetrics().density);
+        controlsRowParams.bottomMargin = (int) (24 * getResources().getDisplayMetrics().density); // Bottom margin for the whole controls block
+        controlsRowLayout.setLayoutParams(controlsRowParams);
+
         // CTA Button
         ctaButton = new Button(getContext());
-        ctaButton.setBackgroundColor(Color.BLUE);
         ctaButton.setTextColor(Color.WHITE);
-        FrameLayout.LayoutParams ctaParams = new FrameLayout.LayoutParams(
-            LayoutParams.WRAP_CONTENT,
-            LayoutParams.WRAP_CONTENT,
-            Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL
-        );
-        ctaParams.bottomMargin = 16;
-        adContainer.addView(ctaButton, ctaParams);
-        
+        ctaButton.setTextSize(15);
+        ctaButton.setTypeface(Typeface.DEFAULT_BOLD);
+        ctaButton.setBackground(createCtaBackground());
+        int ctaHorizontalPadding = (int) (20 * getResources().getDisplayMetrics().density);
+        int ctaVerticalPadding = (int) (10 * getResources().getDisplayMetrics().density);
+        ctaButton.setPadding(ctaHorizontalPadding, ctaVerticalPadding, ctaHorizontalPadding, ctaVerticalPadding);
+        ctaButton.setAllCaps(false);
+        ctaButton.setGravity(Gravity.CENTER); // Ensure text and arrow are centered
+
+        RelativeLayout.LayoutParams ctaRlParams = new RelativeLayout.LayoutParams(
+            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        ctaRlParams.addRule(RelativeLayout.ALIGN_PARENT_START);
+        ctaRlParams.addRule(RelativeLayout.CENTER_VERTICAL);
+        ctaButton.setLayoutParams(ctaRlParams);
+        controlsRowLayout.addView(ctaButton);
+
+        // CTA Button Click Listener
+        ctaButton.setOnClickListener(v -> {
+            // Show an auto-dismissible Toast message
+            Toast.makeText(getContext(), "CTA Clicked! Opening link...", Toast.LENGTH_SHORT).show();
+            
+            if (nativeCustomFormatAd != null) {
+                nativeCustomFormatAd.performClick(ASSET_CALL_TO_ACTION);
+            } else {
+                Log.w(TAG, "CTA button clicked, but nativeCustomFormatAd is null.");
+            }
+        });
+
         // Mute Button
         muteButton = new ImageView(getContext());
-        muteButton.setBackgroundColor(Color.parseColor("#80000000"));
+        muteButton.setImageResource(isMuted ? R.drawable.ic_volume_off : R.drawable.ic_volume_on);
+        GradientDrawable muteBgShape = new GradientDrawable();
+        muteBgShape.setShape(GradientDrawable.OVAL);
+        muteBgShape.setColor(Color.argb(150, 0, 0, 0));
+        muteButton.setBackground(muteBgShape);
+        int buttonSize = (int) (40 * getResources().getDisplayMetrics().density);
+        int padding = (int) (8 * getResources().getDisplayMetrics().density);
+        muteButton.setPadding(padding, padding, padding, padding);
+        RelativeLayout.LayoutParams muteRlParams = new RelativeLayout.LayoutParams(buttonSize, buttonSize);
+        muteRlParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        muteRlParams.addRule(RelativeLayout.CENTER_VERTICAL);
+        muteButton.setLayoutParams(muteRlParams);
+        controlsRowLayout.addView(muteButton);
         muteButton.setOnClickListener(v -> toggleMute());
-        FrameLayout.LayoutParams muteParams = new FrameLayout.LayoutParams(80, 80);
-        muteParams.gravity = Gravity.TOP | Gravity.END;
-        muteParams.topMargin = 16;
-        muteParams.rightMargin = 16;
-        adContainer.addView(muteButton, muteParams);
+
+        bottomControlsContainer.addView(controlsRowLayout);
+        adContainer.addView(bottomControlsContainer);
     }
 
     private void setupVideoAd() {
@@ -163,6 +226,31 @@ public class VideoAd extends FrameLayout {
                 NATIVE_CUSTOM_FORMAT_ID,
                 ad -> {
                     Log.d(TAG, "Custom format ad loaded successfully");
+
+                    // Log available assets
+                    if (ad.getAvailableAssetNames() != null) {
+                        Log.d(TAG, "Available ad assets:");
+                        for (String assetName : ad.getAvailableAssetNames()) {
+                            CharSequence textAsset = ad.getText(assetName);
+                            NativeCustomFormatAd.DisplayOpenMeasurement displayOpenMeasurement = ad.getDisplayOpenMeasurement();
+                            MediaContent mediaContent = ad.getMediaContent();
+
+                            if (textAsset != null) {
+                                Log.d(TAG, "  Asset Name: " + assetName + ", Type: Text, Value: " + textAsset.toString());
+                            } else if (ad.getImage(assetName) != null) {
+                                Log.d(TAG, "  Asset Name: " + assetName + ", Type: Image");
+                            } else if (assetName.equals("media") && mediaContent != null) { // Common name for media content
+                                Log.d(TAG, "  Asset Name: " + assetName + ", Type: MediaContent, Has Video: " + mediaContent.hasVideoContent());
+                            } else if (displayOpenMeasurement != null && assetName.contains("display_open_measurement")) { // Example check
+                                Log.d(TAG, "  Asset Name: " + assetName + ", Type: DisplayOpenMeasurement");
+                            }else {
+                                Log.d(TAG, "  Asset Name: " + assetName + ", Type: Unknown or not directly loggable as text/image");
+                            }
+                        }
+                    } else {
+                        Log.d(TAG, "No available asset names found.");
+                    }
+
                     displayAd(ad);
                     statusText.setVisibility(View.GONE);
                     adContainer.setVisibility(View.VISIBLE);
@@ -195,10 +283,25 @@ public class VideoAd extends FrameLayout {
         }
         nativeCustomFormatAd = ad;
         
-        headingTextView.setText(ad.getText(ASSET_HEADING));
+        // Use "headline" asset for the heading
+        CharSequence headlineCharSequence = ad.getText("headline"); // Use the key "headline"
+        String headlineText = "";
+        if (headlineCharSequence != null) {
+            headlineText = headlineCharSequence.toString().trim();
+        }
+
+        // Hide if headline is empty or literally "Test Ad : null"
+        if (!headlineText.isEmpty() && !"Test Ad : null".equalsIgnoreCase(headlineText)) {
+            headingTextView.setText(headlineText);
+            headingTextView.setVisibility(View.VISIBLE);
+        } else {
+            headingTextView.setVisibility(View.GONE); 
+        }
+
+        // Subtext and CTA remain the same, using their defined asset keys
         subtextTextView.setText(ad.getText(ASSET_SUBTEXT));
-        ctaButton.setText(ad.getText(ASSET_CALL_TO_ACTION));
-        
+        ctaButton.setText(ad.getText(ASSET_CALL_TO_ACTION) + " →");
+
         MediaContent mediaContent = ad.getMediaContent();
         if (mediaContent != null && mediaContent.hasVideoContent()) {
             mediaView.setMediaContent(mediaContent);
@@ -238,8 +341,24 @@ public class VideoAd extends FrameLayout {
                 VideoController videoController = mediaContent.getVideoController();
                 isMuted = !isMuted;
                 videoController.mute(isMuted);
+                muteButton.setImageResource(isMuted ? 
+                    R.drawable.ic_volume_off : R.drawable.ic_volume_on);
             }
         }
+    }
+
+    private Drawable createRoundedBackground() {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(Color.parseColor("#CC222222")); // semi-transparent black
+        drawable.setCornerRadius(40f); // Adjust corner radius as needed
+        return drawable;
+    }
+
+    private Drawable createCtaBackground() {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(Color.BLACK);
+        drawable.setCornerRadius(100f); // Pill shape
+        return drawable;
     }
 
     @Override
