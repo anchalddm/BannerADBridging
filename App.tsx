@@ -23,9 +23,9 @@ function App(): React.JSX.Element {
           
           {/* <BannerAd width={300} height={600}  /> */}
           <VideoAd
-            style={{ width: 300, height: 250 }}
-            width={300}
-            height={250}
+            style={{ width: 400, height: 600 }}
+            width={400}
+            height={600}
             onVideoAdLoaded={() => console.log('Video ad loaded')}
             onVideoAdFailedToLoad={(error) => console.log('Video ad failed to load:', error)}
           />

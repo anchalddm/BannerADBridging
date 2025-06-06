@@ -1,6 +1,8 @@
 package com.bannerbridge;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.*;
@@ -30,6 +32,7 @@ public class VideoAd extends FrameLayout {
     private boolean isMuted = false;
     private TextView statusText;
     private FrameLayout adContainer;
+    private VideoController currentVideoController;
 
     public VideoAd(Context context) {
         super(context);
@@ -198,13 +201,17 @@ public class VideoAd extends FrameLayout {
         
         MediaContent mediaContent = ad.getMediaContent();
         if (mediaContent != null && mediaContent.hasVideoContent()) {
-            VideoController videoController = mediaContent.getVideoController();
             mediaView.setMediaContent(mediaContent);
+            
+            VideoController videoController = mediaContent.getVideoController();
             videoController.mute(isMuted);
             
             videoController.setVideoLifecycleCallbacks(new VideoController.VideoLifecycleCallbacks() {
                 @Override
                 public void onVideoEnd() {
+                    // Reset and replay without view modifications
+                    mediaView.setMediaContent(mediaContent);
+                    videoController.mute(isMuted);
                     videoController.play();
                 }
                 
@@ -214,6 +221,10 @@ public class VideoAd extends FrameLayout {
                 }
             });
             
+            // Store controller reference for reuse
+            currentVideoController = videoController;
+            
+            // Start initial playback
             videoController.play();
         }
         
